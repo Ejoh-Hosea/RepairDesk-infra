@@ -32,33 +32,9 @@ repairdesk-infra                repair-dashboard
 
 ## 📐 Infrastructure Architecture
 
-```
-  User Browser
-       │
-       ▼
-  GoDaddy Domain
-       │ (NS delegation)
-       ▼
-  Route 53 (DNS)
-       │
-       ├──── yourdomain.com ──────────► CloudFront ──► S3
-       │                                                  (React Build)
-       └──── api.yourdomain.com ──────► ALB (HTTPS :443)
-                                          │
-                                   ┌──────┴──────┐
-                                   │     VPC      │
-                                   │ Public Subnet│
-                                   │      │       │
-                                   │Private Subnet│
-                                   │ ECS Fargate  │
-                                   │ Node.js API  │
-                                   └──────┬───────┘
-                                          │
-                           ┌──────────────┼──────────────┐
-                           ▼              ▼               ▼
-                     MongoDB Atlas  Secrets Manager  CloudWatch
-                     (M0 Free)      JWT + DB creds   Logs/Alarms
-```
+<p align="center">
+  <img src="./repairdesk_architecture.png" alt="RepairDesk AWS Architecture" width="900"/>
+</p>
 
 ---
 
@@ -490,16 +466,6 @@ aws ecs describe-services \
 
 - Verify `APP_REPO` secret is in format `username/repair-dashboard`
 - Verify `APP_REPO_TOKEN` has `repo` scope and hasn't expired
-
----
-
-## 📊 Generate Architecture Diagram
-
-```bash
-pip install diagrams
-python diagram.py
-# Generates repairdesk_architecture.png — commit this to the repo
-```
 
 ---
 
