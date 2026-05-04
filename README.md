@@ -324,8 +324,7 @@ aws cloudfront create-invalidation \
 echo "✅ Frontend is live at https://yourdomain.com"
 ```
 
----
-
+dfdf
 STEP 10 --- Seed the Database
 Before running the seed script, you must provide the required
 environment variables locally.
@@ -492,8 +491,6 @@ repairdesk-infra/
 │   ├── cloudwatch.tf               ← Logs + alarms
 │   └── iam.tf                      ← Roles + GitHub Actions user
 ├── Dockerfile                      ← Node.js multi-stage build
-├── diagram.py                      ← Architecture diagram generator
-├── repairdesk_architecture.png     ← Generated — commit this
 ├── .gitignore                      ← Excludes tfvars, tfstate, .terraform/
 └── README.md                       ← This file
 ```
@@ -524,10 +521,3 @@ HA best practice is one per AZ. For a portfolio demo the cost saving
 (~$0.045/hr) is worth the tradeoff. Documented here so you can explain it.
 
 ---
-
-## 🇨🇦 Note on Canadian Data Residency
-
-This infrastructure is deployed in `us-east-1` (N. Virginia). For production
-use in Quebec, consider `ca-central-1` (Montreal) to comply with Quebec's
-**Law 25 / Bill 64** data residency requirements. The Terraform region variable
-makes this a one-line change.
