@@ -1,0 +1,135 @@
+name: Deploy to AWS
+
+# Manual trigger only — go to Actions tab → Deploy to AWS → Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for deploy"
+        required: false
+        default: "Manual deploy"
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: repairdesk-backend
+  ECS_CLUSTER: repairdesk-cluster
+  ECS_SERVICE: repairdesk-service
+  TASK_FAMILY: repairdesk-task
+  CONTAINER_NAME: repairdesk-backend
+
+jobs:
+  deploy:
+    name: Build & Deploy RepairDesk
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Step 1: Checkout THIS infra repo ─────────────────────────────────
+      - name: Checkout infra repo
+        uses: actions/checkout@v4
+        with:
+          path: infra
+
+      # ── Step 2: Checkout the APP repo from GitHub ─────────────────────────
+      # This is the separation — infra repo pulls the app code at deploy time
+      - name: Checkout app repo (repair-dashboard)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.APP_REPO }} # e.g. yourusername/repair-dashboard
+          token: ${{ secrets.APP_REPO_TOKEN }} # PAT with repo read access
+          path: app
+
+      # ── Step 3: Configure AWS ─────────────────────────────────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── Step 4: Build & push backend Docker image ─────────────────────────
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag and push Docker image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Dockerfile lives in infra repo
+          # Build context (source code) comes from the cloned app repo
+          docker build \
+            -f infra/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            app/server
+
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # ── Step 5: Update ECS with new image ────────────────────────────────
+      - name: Render new ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition-family: ${{ env.TASK_FAMILY }}
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # ── Step 6: Build & deploy React frontend ─────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: app/client/package-lock.json
+
+      - name: Install and build React frontend
+        env:
+          # Tells Vite where the API lives — used in axios base URL if needed
+          VITE_API_URL: https://api.${{ secrets.DOMAIN_NAME }}
+        run: |
+          cd app/client
+          npm ci
+          npm run build
+
+      - name: Deploy frontend to S3
+        run: |
+          # Assets (JS/CSS) — long cache, content-hashed filenames
+          aws s3 sync app/client/dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable"
+
+          # index.html — never cache so users always get latest
+          aws s3 cp app/client/dist/index.html \
+            s3://${{ secrets.S3_BUCKET_NAME }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      # ── Step 7: Summary ───────────────────────────────────────────────────
+      - name: Deployment summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  ✅ Deployment complete"
+          echo "  Triggered by: ${{ github.actor }}"
+          echo "  Reason:       ${{ inputs.reason }}"
+          echo "  Image tag:    ${{ github.sha }}"
+          echo "  Frontend:     https://${{ secrets.DOMAIN_NAME }}"
+          echo "  API:          https://api.${{ secrets.DOMAIN_NAME }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

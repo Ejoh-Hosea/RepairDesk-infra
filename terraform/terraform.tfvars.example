@@ -1,0 +1,19 @@
+# Copy this to terraform.tfvars and fill in your real values
+# NEVER commit terraform.tfvars to git — it contains secrets
+
+aws_region    = "us-east-1"
+environment   = "prod"
+project       = "repairdesk"
+
+# Your GoDaddy domain — no www, no https://
+domain_name   = "yourdomain.com"
+api_subdomain = "api"
+
+# MongoDB Atlas free M0 connection string
+mongo_uri = "mongodb+srv://repairapp:YOURPASSWORD@cluster.pkxr4er.mongodb.net/repair-dashboard?retryWrites=true&w=majority&appName=repair-cluster"
+
+# Generate: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+jwt_secret = "your_128_char_hex_string_here"
+
+# Leave as placeholder — GitHub Actions overrides this after first docker push
+app_image = "placeholder"
