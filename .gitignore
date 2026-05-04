@@ -7,3 +7,20 @@ terraform/.terraform/
 terraform/.terraform.lock.hcl
 terraform/crash.log
 terraform/.terraform.tfstate.lock.info
+
+# Python virtual environment
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Generated diagram temp files
+*.dot
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
