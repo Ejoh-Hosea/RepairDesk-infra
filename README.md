@@ -38,6 +38,19 @@ repairdesk-infra                repair-dashboard
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="./screenshots/dashboard.png" width="45%" />
+  &nbsp;
+  <img src="./screenshots/repairs.png" width="45%" />
+</p>
+<p align="center">
+  <img src="./screenshots/login.png" width="45%" />
+  &nbsp;
+  <img src="./screenshots/reports.png" width="45%" />
+</p>
+
 ## ⚠️ Cost Warning — Read Before Starting
 
 This is **not fully free tier**. For a 3–5 day demo expect **$3–6 total**.
