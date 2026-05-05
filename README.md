@@ -302,6 +302,7 @@ curl https://api.yourdomain.com/api/health
 # Build React (using the cloned app repo from Step 7)
 cd app/client
 npm install
+#Run this command below in one line. Don't seperate
 VITE_API_URL=https://api.yourdomain.com npm run build
 cd ../..
 
