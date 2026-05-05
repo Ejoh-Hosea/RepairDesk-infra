@@ -60,6 +60,7 @@ resource "aws_ecs_task_definition" "app" {
       { name = "NODE_ENV",   value = "production" },
       { name = "PORT",       value = tostring(var.app_port) },
       { name = "CLIENT_URL", value = "https://${var.domain_name}" }
+      { name = "DEPLOYMENT_TARGET", value = "aws" }
     ]
 
     logConfiguration = {
