@@ -320,8 +320,8 @@ VITE_API_URL=https://api.yourdomain.com npm run build
 cd ../..
 
 # Set your values from Step 5 output
-S3_BUCKET="repairdesk-frontend-prod"
-CF_ID="E1ABCDEF123456"
+S3_BUCKET="Value from output"
+CF_ID="Copy value from output"
 
 # Upload to S3
 aws s3 sync app/client/dist/ s3://$S3_BUCKET --delete \

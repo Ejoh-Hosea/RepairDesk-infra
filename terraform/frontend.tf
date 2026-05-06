@@ -1,5 +1,10 @@
+# Fetch current AWS account ID — used to guarantee globally unique bucket name
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "${var.project}-frontend-${var.environment}"
+  # S3 bucket names are globally unique across ALL AWS accounts worldwide.
+  # Including the account ID guarantees no collision with other users of this repo.
+  bucket        = "${var.project}-frontend-${var.environment}-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
   tags          = { Name = "${var.project}-frontend" }
 }
